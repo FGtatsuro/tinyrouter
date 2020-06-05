@@ -53,10 +53,6 @@ func TestHandle(t *testing.T) {
 }
 
 func TestHandleFunc(t *testing.T) {
-	router := tinyrouter.New()
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	})
-
 	for _, tc := range testcases {
 		t.Run(tc.path, func(t *testing.T) {
 			router := tinyrouter.New()
