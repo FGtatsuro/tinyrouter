@@ -25,19 +25,22 @@ var paths = []string{
 }
 
 func TestHandle(t *testing.T) {
-	wants := []string{
+	writes := []string{
 		"root",
 		"root_multiple",
 		"next",
 		"next/follow",
 	}
+	wants := writes
 	for i, path := range paths {
+		// FYI: https://github.com/golang/go/wiki/CommonMistakes
+		write := writes[i]
 		t.Run(path, func(t *testing.T) {
 			router := tinyrouter.New()
 			router.Handle(
 				path,
 				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.Write([]byte(wants[i]))
+					w.Write([]byte(write))
 				}))
 
 			s := httptest.NewServer(router)
@@ -56,19 +59,22 @@ func TestHandle(t *testing.T) {
 }
 
 func TestHandleFunc(t *testing.T) {
-	wants := []string{
+	writes := []string{
 		"root",
 		"root_multiple",
 		"next",
 		"next/follow",
 	}
+	wants := writes
 	for i, path := range paths {
+		// FYI: https://github.com/golang/go/wiki/CommonMistakes
+		write := writes[i]
 		t.Run(path, func(t *testing.T) {
 			router := tinyrouter.New()
 			router.HandleFunc(
 				path,
 				func(w http.ResponseWriter, r *http.Request) {
-					w.Write([]byte(wants[i]))
+					w.Write([]byte(write))
 				})
 
 			s := httptest.NewServer(router)
