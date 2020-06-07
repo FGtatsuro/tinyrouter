@@ -144,3 +144,40 @@ func TestMultipleRoutes(t *testing.T) {
 		})
 	}
 }
+
+func TestRegexpRoutes(t *testing.T) {
+	routes := []route{
+		{"/regex/{[0-9]+}", "regex"},
+		{"/regex/{[a-z][A-Z]}", "smallbig"},
+	}
+	testcases := []testcase{
+		{"/regex/12345", "regex"},
+		{"/regex/aB", "smallbig"},
+	}
+
+	router := tinyrouter.New()
+	for _, route := range routes {
+		// FYI: https://github.com/golang/go/wiki/CommonMistakes
+		write := route.write
+		router.HandleFunc(
+			route.path,
+			func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(write))
+			})
+	}
+	for _, tc := range testcases {
+		t.Run(tc.path, func(t *testing.T) {
+			s := httptest.NewServer(router)
+			defer s.Close()
+			resp, _ := s.Client().Get(s.URL + tc.path)
+
+			defer resp.Body.Close()
+			body, _ := ioutil.ReadAll(resp.Body)
+
+			got := string(body)
+			if tc.want != got {
+				t.Errorf("Handler binding to '%v' must be called: want: %v/got %v", tc.path, tc.want, got)
+			}
+		})
+	}
+}
