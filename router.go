@@ -28,13 +28,11 @@ func New() *Router {
 }
 
 func (router *Router) Handle(pattern string, handler http.Handler) {
-	// TODO: More precise way to find regex
-	// TODO: Now, repetitions like {2} can't be used
 	current := router.root
 	for _, segment := range strings.Split(path.Clean(pattern), "/")[1:] {
-		if strings.Contains(segment, "{") && strings.Contains(segment, "}") {
-			segment = strings.ReplaceAll(segment, "{", "")
-			segment = strings.ReplaceAll(segment, "}", "")
+		if strings.HasPrefix(segment, "{") && strings.HasSuffix(segment, "}") {
+			// TODO: Now, we can't support path including Japanese
+			segment = segment[1:len(segment)-1]
 			if n, ok := current.regexpChildren[segment]; ok {
 				current = n
 			} else {
