@@ -14,7 +14,6 @@ type Router struct {
 type node struct {
 	handler           *http.Handler
 	exp               *regexp.Regexp
-	static            string
 	staticChildren map[string]*node
 	regexpChildren map[string]*node
 }
@@ -55,8 +54,6 @@ func (router *Router) Handle(pattern string, handler http.Handler) {
 				current = n
 			} else {
 				newNode := &node{
-					// TODO: No need?
-					static:            segment,
 					staticChildren: map[string]*node{},
 					regexpChildren: map[string]*node{},
 				}
