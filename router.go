@@ -1,6 +1,7 @@
 package tinyrouter
 
 import (
+	"fmt"
 	"net/http"
 	"path"
 	"regexp"
@@ -32,7 +33,7 @@ func (router *Router) Handle(pattern string, handler http.Handler) {
 	for _, segment := range strings.Split(path.Clean(pattern), "/")[1:] {
 		if strings.HasPrefix(segment, "{") && strings.HasSuffix(segment, "}") {
 			// TODO: Now, we can't support path including Japanese
-			segment = segment[1:len(segment)-1]
+			segment = fmt.Sprintf("^%v$", segment[1 : len(segment)-1])
 			if n, ok := current.regexpChildren[segment]; ok {
 				current = n
 			} else {
