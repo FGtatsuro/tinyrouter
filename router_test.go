@@ -149,10 +149,12 @@ func TestRegexpRoutes(t *testing.T) {
 	routes := []route{
 		{"/regex/{[0-9]+}", "regex"},
 		{"/regex/{[a-z][A-Z]}", "smallbig"},
+		{"/regex/{[a-z]{3}[A-Z]}", "repeatnumber"},
 	}
 	testcases := []testcase{
 		{"/regex/12345", "regex"},
 		{"/regex/aB", "smallbig"},
+		{"/regex/xyzA", "repeatnumber"},
 	}
 
 	router := tinyrouter.New()
