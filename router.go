@@ -13,8 +13,8 @@ type Router struct {
 }
 
 type node struct {
-	handler           *http.Handler
-	exp               *regexp.Regexp
+	handler        *http.Handler
+	exp            *regexp.Regexp
 	staticChildren map[string]*node
 	regexpChildren map[string]*node
 }
@@ -33,7 +33,7 @@ func (router *Router) Handle(pattern string, handler http.Handler) {
 	for _, segment := range strings.Split(path.Clean(pattern), "/")[1:] {
 		if strings.HasPrefix(segment, "{") && strings.HasSuffix(segment, "}") {
 			// TODO: Now, we can't support path including Japanese
-			segment = fmt.Sprintf("^%v$", segment[1 : len(segment)-1])
+			segment = fmt.Sprintf("^%v$", segment[1:len(segment)-1])
 			if n, ok := current.regexpChildren[segment]; ok {
 				current = n
 			} else {
@@ -41,7 +41,7 @@ func (router *Router) Handle(pattern string, handler http.Handler) {
 				// Include interface consideration. Return error or not?
 				exp, _ := regexp.Compile(segment)
 				newNode := &node{
-					exp:               exp,
+					exp:            exp,
 					staticChildren: map[string]*node{},
 					regexpChildren: map[string]*node{},
 				}
