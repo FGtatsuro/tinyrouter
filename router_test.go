@@ -183,3 +183,45 @@ func TestRegexpRoutes(t *testing.T) {
 		})
 	}
 }
+
+func TestNotFound(t *testing.T) {
+	routes := []route{
+		{"/regex", "regex"},
+		{"/regex/{[a-z]{3}[A-Z]}", "repeatnumber"},
+	}
+	testcases := []testcase{
+		{"/regexnf", "404 page not found\n"},
+		{"/regex/xyzAnf", "404 page not found\n"},
+	}
+
+	router := tinyrouter.New()
+	for _, route := range routes {
+		// FYI: https://github.com/golang/go/wiki/CommonMistakes
+		write := route.write
+		router.HandleFunc(
+			route.path,
+			func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(write))
+			})
+	}
+	for _, tc := range testcases {
+		t.Run(tc.path, func(t *testing.T) {
+			s := httptest.NewServer(router)
+			defer s.Close()
+			resp, _ := s.Client().Get(s.URL + tc.path)
+
+			// Built-in NotFound handler is used
+			if resp.StatusCode != 404 {
+				t.Errorf("Not-match path must return status 404")
+			}
+
+			defer resp.Body.Close()
+			body, _ := ioutil.ReadAll(resp.Body)
+
+			got := string(body)
+			if tc.want != got {
+				t.Errorf("Handler binding to '%v' must be called: want: %v/got %v", tc.path, tc.want, got)
+			}
+		})
+	}
+}
