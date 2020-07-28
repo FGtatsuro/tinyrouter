@@ -85,8 +85,8 @@ Loop:
 				continue Loop
 			}
 		}
-		// TODO: Handle the case path doesn't exist in handler map.
-		// TODO: return error
+
+		http.NotFound(w, r)
 		return
 	}
 	(*current.handler).ServeHTTP(w, r)
