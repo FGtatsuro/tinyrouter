@@ -267,3 +267,37 @@ func TestRegexpPathVars(t *testing.T) {
 		})
 	}
 }
+
+func TestNodeExistButNoHandler(t *testing.T) {
+	// regex node exists, but it doesn't have a handler
+	routes := []route{
+		{"/regex/hoge", "repeatnumber"},
+	}
+	testcases := []testcase{
+		{"/regex", "404 page not found\n"},
+		{"/regex/", "404 page not found\n"},
+	}
+
+	router := tinyrouter.New()
+	for _, route := range routes {
+		// FYI: https://github.com/golang/go/wiki/CommonMistakes
+		write := route.write
+		router.HandleFunc(
+			route.path,
+			func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(write))
+			})
+	}
+	for _, tc := range testcases {
+		t.Run(tc.path, func(t *testing.T) {
+			s := httptest.NewServer(router)
+			defer s.Close()
+			resp, _ := s.Client().Get(s.URL + tc.path)
+
+			// Built-in NotFound handler is used
+			if resp.StatusCode != 404 {
+				t.Errorf("Not-match path must return status 404")
+			}
+		})
+	}
+}
