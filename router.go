@@ -1,6 +1,7 @@
 package tinyrouter
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"path"
@@ -18,6 +19,14 @@ type node struct {
 	staticChildren map[string]*node
 	regexpChildren map[string]*node
 }
+
+type contextKey struct {
+	name string
+}
+
+var (
+	PathVarsContextKey = &contextKey{"path-match"}
+)
 
 func New() *Router {
 	return &Router{
@@ -71,6 +80,7 @@ func (router *Router) HandleFunc(pattern string, handler func(http.ResponseWrite
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Search order: static -> regexp
 	current := router.root
+	vars := make([]string, 0, 20)
 Loop:
 	for _, segment := range strings.Split(path.Clean(r.URL.Path), "/")[1:] {
 		if n, ok := current.staticChildren[segment]; ok {
@@ -80,7 +90,8 @@ Loop:
 		// TODO: Now, search order of regexp isn't fixed
 		// TODO: This action is O(N)(N=regex segment num) order
 		for _, n := range current.regexpChildren {
-			if n.exp.Match([]byte(segment)) {
+			if m := n.exp.Find([]byte(segment)); m != nil {
+				vars = append(vars, string(m))
 				current = n
 				continue Loop
 			}
@@ -89,5 +100,6 @@ Loop:
 		http.NotFound(w, r)
 		return
 	}
+	r = r.WithContext(context.WithValue(r.Context(), PathVarsContextKey, vars))
 	(*current.handler).ServeHTTP(w, r)
 }

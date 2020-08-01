@@ -3,6 +3,7 @@ package tinyrouter_test
 import (
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/FGtatsuro/tinyrouter"
@@ -214,6 +215,47 @@ func TestNotFound(t *testing.T) {
 			if resp.StatusCode != 404 {
 				t.Errorf("Not-match path must return status 404")
 			}
+
+			defer resp.Body.Close()
+			body, _ := ioutil.ReadAll(resp.Body)
+
+			got := string(body)
+			if tc.want != got {
+				t.Errorf("Handler binding to '%v' must be called: want: %v/got %v", tc.path, tc.want, got)
+			}
+		})
+	}
+}
+
+func TestRegexpPathVars(t *testing.T) {
+	routes := []route{
+		{"/regex", ""},
+		{"/regex/{[0-9]+}", ""},
+		{"/regex/{[a-z]{3}[A-Z]}/{[0-9]+}", ""},
+		{"/regex/{[a-z]{3}[A-Z]}/{[0-9]+}/{.*}", ""},
+	}
+	testcases := []testcase{
+		{"/regex", ""},
+		{"/regex/12345", "12345"},
+		{"/regex/xyzA/1234", "xyzA,1234"},
+		{"/regex/xyzA/1234/cb12", "xyzA,1234,cb12"},
+	}
+
+	router := tinyrouter.New()
+	for _, route := range routes {
+		router.HandleFunc(
+			route.path,
+			func(w http.ResponseWriter, r *http.Request) {
+				if rv, ok := r.Context().Value(tinyrouter.PathVarsContextKey).([]string); ok {
+					w.Write([]byte(strings.Join(rv, ",")))
+				}
+			})
+	}
+	for _, tc := range testcases {
+		t.Run(tc.path, func(t *testing.T) {
+			s := httptest.NewServer(router)
+			defer s.Close()
+			resp, _ := s.Client().Get(s.URL + tc.path)
 
 			defer resp.Body.Close()
 			body, _ := ioutil.ReadAll(resp.Body)
