@@ -100,6 +100,11 @@ Loop:
 		http.NotFound(w, r)
 		return
 	}
+	if current.handler == nil {
+		http.NotFound(w, r)
+		return
+	}
+
 	r = r.WithContext(context.WithValue(r.Context(), PathVarsContextKey, vars))
 	(*current.handler).ServeHTTP(w, r)
 }
